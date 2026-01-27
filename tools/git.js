@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
 function runGit(args, cwd) {
@@ -173,7 +174,19 @@ export function analyzeFeatureTimeline({ repoPath = process.cwd(), maxCommits = 
     }
   }
   
-  return { title: 'Feature Timeline', events, mermaid: toMermaidTimeline('Feature Timeline', events) };
+  const timelineDir = path.join(repoPath, '.timeline');
+  mkdirSync(timelineDir, { recursive: true });
+  const mermaid = toMermaidTimeline('Feature Timeline', events);
+  
+  // Generate HTML file
+  const htmlPath = path.join(timelineDir, 'FEATURE_TIMELINE.html');
+  generateHtmlFile(htmlPath, 'Feature Timeline', events, mermaid);
+  
+  // Generate Markdown file
+  const mdPath = path.join(timelineDir, 'FEATURE_TIMELINE.md');
+  generateMarkdownFile(mdPath, 'Feature Timeline', events);
+  
+  return { title: 'Feature Timeline', events, mermaid, files: { html: htmlPath, markdown: mdPath } };
 }
 
 function extractAddedDependencies(pkgDiff) {
@@ -201,6 +214,210 @@ function findMatchingTooling(addedLines, toolingPatterns) {
   return Array.from(detected);
 }
 
+function generateHtmlFile(filepath, title, events, mermaidText) {
+  const projectName = 'Project';
+  const typeIcon = title.includes('Feature') ? '📅' : '🔧';
+  const itemIcon = title.includes('Feature') ? '🚀' : '✨';
+  
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 60px;
+    }
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .timeline {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: rgba(255,255,255,0.3);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 50px;
+      width: 48%;
+    }
+    .timeline-item:nth-child(odd) {
+      margin-left: 0;
+      padding-right: 30px;
+    }
+    .timeline-item:nth-child(even) {
+      margin-left: 52%;
+      padding-left: 30px;
+    }
+    .timeline-dot {
+      position: absolute;
+      top: 20px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border: 4px solid #667eea;
+      border-radius: 50%;
+      z-index: 1;
+    }
+    .timeline-item:nth-child(odd) .timeline-dot {
+      right: -8px;
+    }
+    .timeline-item:nth-child(even) .timeline-dot {
+      left: -8px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    }
+    .card-date {
+      font-size: 15px;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 12px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .card-header .emoji {
+      font-size: 20px;
+    }
+    .card-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: #333;
+    }
+    .card-description {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tag {
+      background: #f0f0f0;
+      color: #555;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>
+      <span>${typeIcon}</span>
+      <span>${projectName} - ${title}</span>
+    </h1>
+  </div>
+  
+  <div class="timeline">
+    ${events.map((event, i) => {
+      const cleanTitle = event.title.replace(/^(Feature: |Tooling: )/, '');
+      const tags = event.tags || [];
+      const description = event.description ? event.description.split('\n')[0] : '';
+      
+      return `
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="card">
+        <div class="card-date">${new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+        <div class="card-header">
+          <span class="emoji">${itemIcon}</span>
+          <div class="card-title">${cleanTitle}</div>
+        </div>
+        ${description ? `<div class="card-description">${description}</div>` : ''}
+        ${tags.length > 0 ? `
+        <div class="tags">
+          ${tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+        </div>
+        ` : ''}
+      </div>
+    </div>
+    `;
+    }).join('')}
+  </div>
+</body>
+</html>`;
+  
+  writeFileSync(filepath, html, 'utf8');
+}
+
+function generateMarkdownFile(filepath, title, events) {
+  let content = `# ${title}\n\n`;
+  content += `Generated: ${new Date().toISOString()}\n\n`;
+  content += `Total events: **${events.length}**\n\n`;
+  content += `## Timeline\n\n`;
+  
+  const byDate = new Map();
+  for (const e of events) {
+    const arr = byDate.get(e.date) ?? [];
+    arr.push(e);
+    byDate.set(e.date, arr);
+  }
+  
+  const sortedDates = Array.from(byDate.keys()).sort((a, b) => a.localeCompare(b));
+  
+  for (const d of sortedDates) {
+    const dayEvents = byDate.get(d) || [];
+    content += `### ${d}\n\n`;
+    for (const e of dayEvents) {
+      content += `**${e.title}**\n`;
+      if (e.description) {
+        content += `- ${e.description.split('\n')[0]}\n`;
+      }
+      if (e.commitHash) {
+        content += `- Commit: \`${e.commitHash}\`\n`;
+      }
+      if (e.tags?.length) {
+        content += `- Tags: ${e.tags.map(t => `\`${t}\``).join(', ')}\n`;
+      }
+      content += '\n';
+    }
+  }
+  
+  writeFileSync(filepath, content, 'utf8');
+}
+
 export function analyzeToolingTimeline({ repoPath = process.cwd(), maxCommits = 2000 } = {}) {
   repoPath = path.resolve(repoPath);
   ensureRepo(repoPath);
@@ -218,5 +435,18 @@ export function analyzeToolingTimeline({ repoPath = process.cwd(), maxCommits = 
       events.push({ date: toDateIso(c.date), title: `${tool} introduced`, description: c.message, commitHash: c.hash, tags: ['tooling', tool] });
     }
   }
-  return { title: 'Tooling Timeline', events, mermaid: toMermaidTimeline('Tooling Timeline', events) };
+  
+  const timelineDir = path.join(repoPath, '.timeline');
+  mkdirSync(timelineDir, { recursive: true });
+  const mermaid = toMermaidTimeline('Tooling Timeline', events);
+  
+  // Generate HTML file
+  const htmlPath = path.join(timelineDir, 'TOOLING_TIMELINE.html');
+  generateHtmlFile(htmlPath, 'Tooling Timeline', events, mermaid);
+  
+  // Generate Markdown file
+  const mdPath = path.join(timelineDir, 'TOOLING_TIMELINE.md');
+  generateMarkdownFile(mdPath, 'Tooling Timeline', events);
+  
+  return { title: 'Tooling Timeline', events, mermaid, files: { html: htmlPath, markdown: mdPath } };
 }
