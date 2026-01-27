@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
 import { analyzeFeatureTimeline, analyzeToolingTimeline } from "./tools/git.js";
 
 export class GitTimelineServer {
@@ -25,18 +26,12 @@ export class GitTimelineServer {
 
   setupTools() {
     // Register generateFeatureTimeline tool
-    this.server.registerTool(
+    this.server.tool(
       "generateFeatureTimeline",
+      "Analyze git history and produce a Mermaid timeline of features added",
       {
-        description: "Analyze git history and produce a Mermaid timeline of features added",
-        inputSchema: {
-          type: "object",
-          properties: {
-            repoPath: { type: "string", description: "Path to git repo (defaults to current directory)" },
-            maxCommits: { type: "number", description: "Max commits to scan (default 2000)" },
-          },
-          required: [],
-        },
+        repoPath: z.string().optional().describe("Path to git repo (defaults to current directory)"),
+        maxCommits: z.number().optional().describe("Max commits to scan (default 2000)"),
       },
       async (args) => {
         try {
@@ -60,18 +55,12 @@ export class GitTimelineServer {
     );
 
     // Register generateToolingTimeline tool
-    this.server.registerTool(
+    this.server.tool(
       "generateToolingTimeline",
+      "Analyze git history and produce a Mermaid timeline of tooling introduced",
       {
-        description: "Analyze git history and produce a Mermaid timeline of tooling introduced",
-        inputSchema: {
-          type: "object",
-          properties: {
-            repoPath: { type: "string", description: "Path to git repo (defaults to current directory)" },
-            maxCommits: { type: "number", description: "Max commits to scan (default 2000)" },
-          },
-          required: [],
-        },
+        repoPath: z.string().optional().describe("Path to git repo (defaults to current directory)"),
+        maxCommits: z.number().optional().describe("Max commits to scan (default 2000)"),
       },
       async (args) => {
         try {
