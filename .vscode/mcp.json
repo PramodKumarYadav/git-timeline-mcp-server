@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "git-history-timeline": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["server.js"]
+    }
+  }
+}
