@@ -28,7 +28,7 @@ export class GitTimelineServer {
     // Register generateFeatureTimeline tool
     this.server.tool(
       "generateFeatureTimeline",
-      "Analyze git history and produce a Mermaid timeline of features added. Also generates HTML files in .timeline/ folder.",
+      "Analyze git history and generate a timeline of features added. Creates HTML and Markdown files in .timeline/ folder.",
       {
         repoPath: z.string().optional().describe("Path to git repo (defaults to current directory)"),
         maxCommits: z.number().optional().describe("Max commits to scan (default 2000)"),
@@ -47,8 +47,7 @@ export class GitTimelineServer {
           return {
             content: [
               { type: "text", text: `Generated ${features.events.length} feature phases. Files saved to ${repoPath}/.timeline/ folder.` },
-              { type: "text", text: "Mermaid diagram:" },
-              { type: "text", text: features.mermaid },
+              { type: "text", text: `Open ${repoPath}/.timeline/FEATURE_TIMELINE.html to view the timeline.` },
             ],
           };
         } catch (error) {
@@ -64,7 +63,7 @@ export class GitTimelineServer {
     // Register generateToolingTimeline tool
     this.server.tool(
       "generateToolingTimeline",
-      "Analyze git history and produce a Mermaid timeline of tooling introduced. Also generates HTML files in .timeline/ folder.",
+      "Analyze git history and generate a timeline of tooling introduced. Creates HTML and Markdown files in .timeline/ folder.",
       {
         repoPath: z.string().optional().describe("Path to git repo (defaults to current directory)"),
         maxCommits: z.number().optional().describe("Max commits to scan (default 2000)"),
@@ -83,8 +82,7 @@ export class GitTimelineServer {
           return {
             content: [
               { type: "text", text: `Generated ${tooling.events.length} tooling phases. Files saved to ${repoPath}/.timeline/ folder.` },
-              { type: "text", text: "Mermaid diagram:" },
-              { type: "text", text: tooling.mermaid },
+              { type: "text", text: `Open ${repoPath}/.timeline/TOOLING_TIMELINE.html to view the timeline.` },
             ],
           };
         } catch (error) {
@@ -127,10 +125,7 @@ export class GitTimelineServer {
             content: [
               { type: "text", text: `Generated timelines with ${features.events.length} feature phases and ${tooling.events.length} tooling phases.` },
               { type: "text", text: `Files saved to ${repoPath}/.timeline/ folder (including dashboard).` },
-              { type: "text", text: "\nFeature Timeline Mermaid:" },
-              { type: "text", text: features.mermaid },
-              { type: "text", text: "\nTooling Timeline Mermaid:" },
-              { type: "text", text: tooling.mermaid },
+              { type: "text", text: `Open ${repoPath}/.timeline/index.html to view the interactive dashboard.` },
             ],
           };
         } catch (error) {

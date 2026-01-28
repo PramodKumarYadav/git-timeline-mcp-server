@@ -1,24 +1,10 @@
 /**
  * Output Generators
- * Generate HTML, Markdown, Mermaid, and Dashboard files
+ * Generate HTML, Markdown, and Dashboard files
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
-
-// =============================================================================
-// MERMAID GENERATION
-// =============================================================================
-
-export function toMermaidTimeline(title, events) {
-  const lines = ['timeline', `  title ${title}`];
-  
-  for (const e of events) {
-    lines.push(`  ${e.date} : ${e.title}`);
-  }
-  
-  return lines.join('\n');
-}
 
 // =============================================================================
 // HTML TIMELINE GENERATION

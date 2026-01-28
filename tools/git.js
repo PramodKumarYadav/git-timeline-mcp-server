@@ -39,7 +39,6 @@ import {
 
 // Output generators
 import {
-  toMermaidTimeline,
   generateTimelineHtml,
   generateTimelineMd,
   generateDashboard as generateDashboardHtml,
@@ -126,17 +125,16 @@ export async function analyzeToolingTimeline({ repoPath = process.cwd(), maxComm
   
   // Generate output files
   const timelineDir = ensureTimelineDir(repoPath);
-  const mermaid = toMermaidTimeline('Tooling Timeline', events);
   const htmlPath = path.join(timelineDir, 'TOOLING_TIMELINE.html');
   const mdPath = path.join(timelineDir, 'TOOLING_TIMELINE.md');
   
   generateTimelineHtml(htmlPath, 'Tooling Timeline', events);
   generateTimelineMd(mdPath, 'Tooling Timeline', events);
   
-  return { title: 'Tooling Timeline', events, mermaid, files: { html: htmlPath, markdown: mdPath } };
+  return { title: 'Tooling Timeline', events, files: { html: htmlPath, markdown: mdPath } };
   } catch (error) {
     console.error(`[ERROR] analyzeToolingTimeline failed:`, error);
-    return { title: 'Tooling Timeline', events: [], mermaid: '', files: {} };
+    return { title: 'Tooling Timeline', events: [], files: {} };
   }
 }
 
@@ -223,17 +221,16 @@ export function analyzeFeatureTimeline({ repoPath = process.cwd(), maxCommits = 
   
   // Generate output files
   const timelineDir = ensureTimelineDir(repoPath);
-  const mermaid = toMermaidTimeline('Feature Timeline', events);
   const htmlPath = path.join(timelineDir, 'FEATURE_TIMELINE.html');
   const mdPath = path.join(timelineDir, 'FEATURE_TIMELINE.md');
   
   generateTimelineHtml(htmlPath, 'Feature Timeline', events);
   generateTimelineMd(mdPath, 'Feature Timeline', events);
   
-  return { title: 'Feature Timeline', events, mermaid, files: { html: htmlPath, markdown: mdPath } };
+  return { title: 'Feature Timeline', events, files: { html: htmlPath, markdown: mdPath } };
   } catch (error) {
     console.error(`[ERROR] analyzeFeatureTimeline failed:`, error);
-    return { title: 'Feature Timeline', events: [], mermaid: '', files: {} };
+    return { title: 'Feature Timeline', events: [], files: {} };
   }
 }
 
@@ -260,6 +257,3 @@ export async function generateAllTimelines({ repoPath = process.cwd(), maxCommit
     dashboard: dashboardPath
   };
 }
-
-// Re-export for compatibility
-export { toMermaidTimeline };
