@@ -54,6 +54,11 @@ cd /path/to/your/project
 git-timeline
 ```
 
+Or use without installing via npx:
+```bash
+npx @pramodyadav027/git-timeline-mcp-server
+```
+
 ### Option 2: Local Development/Testing
 
 Clone this repository and install dependencies:
@@ -67,11 +72,8 @@ npm install
 node generate-timelines.js
 ```
 
-```bash
-npx @pramodyadav027/git-timeline-mcp-server
-```
 
-Or use without installing via npx:
+
 
 ## Configuration for VS Code
 
