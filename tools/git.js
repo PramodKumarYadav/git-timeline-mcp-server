@@ -197,7 +197,7 @@ export function analyzeFeatureTimeline({ repoPath = process.cwd(), maxCommits = 
     }
   }
   
-  // Generate grouped events
+  // Generate grouped events (can have multiple per day now)
   const events = [];
   const sortedDates = Array.from(featuresByDate.keys()).sort((a, b) => a.localeCompare(b));
   
@@ -206,16 +206,19 @@ export function analyzeFeatureTimeline({ repoPath = process.cwd(), maxCommits = 
     const libraryList = Array.from(libraries);
     const filesList = Array.from(changedFiles);
     
-    // Generate phase info that considers both features and libraries
-    const phaseInfo = generateFeaturePhaseInfo(domains, libraryList, filesList);
+    // Generate phase info - returns array of events (can be multiple per day)
+    const phaseInfos = generateFeaturePhaseInfo(domains, libraryList, filesList);
     
-    events.push({
-      date,
-      title: phaseInfo.title,
-      icon: phaseInfo.icon,
-      description: phaseInfo.description,
-      tags: libraryList // Use library names as tags, not domain names
-    });
+    // Add each event with the same date
+    for (const phaseInfo of phaseInfos) {
+      events.push({
+        date,
+        title: phaseInfo.title,
+        icon: phaseInfo.icon,
+        description: phaseInfo.description,
+        tags: phaseInfo.tags // Now using file names, not libraries
+      });
+    }
   }
   
   // Generate output files

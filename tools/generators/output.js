@@ -28,31 +28,55 @@ export function generateTimelineHtml(filepath, title, events) {
   const projectName = 'Project';
   const headerIcon = title.includes('Feature') ? '📅' : '🔧';
   
-  const timelineItems = events.map((event) => {
-    const tags = event.tags || [];
-    const description = event.description || '';
-    const icon = event.icon || '✨';
-    const formattedDate = new Date(event.date).toLocaleDateString('en-US', { 
+  // Group events by date
+  const eventsByDate = new Map();
+  for (const event of events) {
+    if (!eventsByDate.has(event.date)) {
+      eventsByDate.set(event.date, []);
+    }
+    eventsByDate.get(event.date).push(event);
+  }
+  
+  const sortedDates = Array.from(eventsByDate.keys()).sort((a, b) => a.localeCompare(b));
+  
+  // Generate timeline items grouped by date
+  const timelineItems = sortedDates.map((date) => {
+    const dateEvents = eventsByDate.get(date);
+    const formattedDate = new Date(date).toLocaleDateString('en-US', { 
       month: 'long', day: 'numeric', year: 'numeric' 
     });
     
-    const tagsHtml = tags.length > 0 
-      ? '<div class="tags">' + tags.map(tag => '<span class="tag">' + tag + '</span>').join('') + '</div>'
-      : '';
-    
-    const descHtml = description ? '<div class="card-description">' + description + '</div>' : '';
+    // Create cards for all events on this date
+    const cardsHtml = dateEvents.map(event => {
+      const tags = event.tags || [];
+      const description = event.description || '';
+      const icon = event.icon || '✨';
+      
+      const tagsHtml = tags.length > 0 
+        ? '<div class="tags">' + tags.map(tag => '<span class="tag">' + tag + '</span>').join('') + '</div>'
+        : '';
+      
+      const descHtml = description ? '<div class="card-description">' + description + '</div>' : '';
+      
+      return `
+        <div class="card">
+          <div class="card-header">
+            <span class="emoji">${icon}</span>
+            <div class="card-title">${event.title}</div>
+          </div>
+          ${descHtml}
+          ${tagsHtml}
+        </div>`;
+    }).join('');
     
     return `
     <div class="timeline-item">
       <div class="timeline-dot"></div>
-      <div class="card">
-        <div class="card-date">${formattedDate}</div>
-        <div class="card-header">
-          <span class="emoji">${icon}</span>
-          <div class="card-title">${event.title}</div>
+      <div class="timeline-content">
+        <div class="date-header">${formattedDate}</div>
+        <div class="cards-row">
+          ${cardsHtml}
         </div>
-        ${descHtml}
-        ${tagsHtml}
       </div>
     </div>`;
   }).join('');
@@ -86,7 +110,7 @@ export function generateTimelineHtml(filepath, title, events) {
       gap: 12px;
     }
     .timeline {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
       position: relative;
     }
@@ -95,38 +119,54 @@ export function generateTimelineHtml(filepath, title, events) {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      top: 0;
+      bottom: 0;
       width: 4px;
-      height: 100%;
       background: rgba(255,255,255,0.3);
+      border-radius: 2px;
     }
     .timeline-item {
       position: relative;
       margin-bottom: 50px;
-      width: 48%;
-    }
-    .timeline-item:nth-child(odd) {
-      margin-left: 0;
-      padding-right: 30px;
+      display: flex;
+      justify-content: flex-start;
+      padding-left: 0;
+      padding-right: 50%;
     }
     .timeline-item:nth-child(even) {
-      margin-left: 52%;
-      padding-left: 30px;
+      justify-content: flex-end;
+      padding-left: 50%;
+      padding-right: 0;
     }
     .timeline-dot {
       position: absolute;
-      top: 20px;
-      width: 16px;
-      height: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 8px;
+      width: 18px;
+      height: 18px;
       background: white;
       border: 4px solid #667eea;
       border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.2);
       z-index: 1;
     }
-    .timeline-item:nth-child(odd) .timeline-dot {
-      right: -8px;
+    .timeline-content {
+      max-width: 550px;
+      width: 100%;
     }
-    .timeline-item:nth-child(even) .timeline-dot {
-      left: -8px;
+    .date-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .cards-row {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
     .card {
       background: white;
@@ -134,28 +174,25 @@ export function generateTimelineHtml(filepath, title, events) {
       padding: 24px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       transition: transform 0.3s, box-shadow 0.3s;
+      width: 100%;
     }
     .card:hover {
       transform: translateY(-4px);
       box-shadow: 0 12px 32px rgba(0,0,0,0.2);
     }
-    .card-date {
-      font-size: 15px;
-      font-weight: 600;
-      color: #667eea;
-      margin-bottom: 12px;
-    }
     .card-header {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #f0f0f0;
     }
     .card-header .emoji {
-      font-size: 20px;
+      font-size: 24px;
     }
     .card-title {
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 700;
       color: #333;
     }

@@ -29,6 +29,9 @@ const EXCLUDED_FILES = [
   /\.editorconfig$/,
   /\.github\//,
   /\.husky\//,
+  /\.vscode\//,
+  /\.idea\//,
+  /\.maintenance\//,
   /railway\.(json|toml)$/,
   /vercel\.json$/,
   /netlify\.toml$/,
@@ -42,12 +45,16 @@ const EXCLUDED_FILES = [
   /__tests__\//,
 ];
 
-// Generic infrastructure/technical folders to skip
+// Generic infrastructure/technical folders to skip (ONLY AT ROOT LEVEL)
 const TECHNICAL_FOLDERS = [
-  'src', 'app', 'pages', 'components', 'lib', 'utils', 'helpers', 
-  'public', 'assets', 'styles', 'css', 'constants', 'types',
-  'interfaces', 'models', 'schemas', 'routes', 'controllers',
-  'middleware', 'config', 'services', 'api', 'hooks', 'context'
+  'src', 'app', 'public', 'assets', 'styles', 'css', 'constants', 'types',
+  'interfaces', 'schemas', 'node_modules', 'dist', 'build', '.next', '.nuxt',
+  'frontend', 'backend', 'client', 'server', 'tests', 'test', '__tests__'
+];
+
+// Folders that indicate technical layers (skip these, look deeper)
+const SKIP_FOLDERS = [
+  'utils', 'helpers', 'lib', 'common', 'shared', 'hooks', 'context', 'src'
 ];
 
 // =============================================================================
@@ -55,32 +62,27 @@ const TECHNICAL_FOLDERS = [
 // =============================================================================
 
 /**
- * Infer icon from folder/file name semantics
+ * Infer icon from folder/file name semantics (GENERIC categories)
  */
 function inferIcon(name) {
   const lower = name.toLowerCase();
   
-  // Common semantic patterns
-  if (/payment|billing|invoice|checkout|subscription|stripe/.test(lower)) return '💳';
-  if (/auth|login|signup|signin|register|session/.test(lower)) return '🔐';
-  if (/password|reset|forgot/.test(lower)) return '🔑';
-  if (/email|mail|notification|smtp/.test(lower)) return '📧';
-  if (/profile|account|settings|user/.test(lower)) return '👤';
-  if (/dashboard|analytics|stats|metrics|chart/.test(lower)) return '📊';
+  // Generic high-level categories (not domain-specific)
+  if (/auth|login|signup|signin|register|session|password|security/.test(lower)) return '🔐';
+  if (/user|profile|account|customer|client|member/.test(lower)) return '👤';
+  if (/admin|manage|role|permission/.test(lower)) return '👥';
+  if (/dashboard|analytics|stats|metrics|chart|report/.test(lower)) return '📊';
+  if (/payment|billing|invoice|checkout|transaction|order/.test(lower)) return '💳';
+  if (/email|mail|notification|message|alert/.test(lower)) return '📧';
   if (/search|filter|query|find/.test(lower)) return '🔍';
-  if (/upload|storage|file|media|image/.test(lower)) return '📁';
-  if (/report|export|pdf|csv/.test(lower)) return '📄';
-  if (/admin|role|permission|management/.test(lower)) return '👥';
-  if (/rule|engine|policy|workflow/.test(lower)) return '⚙️';
-  if (/integration|webhook|callback|external/.test(lower)) return '🔗';
-  if (/cache|redis/.test(lower)) return '⚡';
-  if (/job|cron|scheduler|queue|worker/.test(lower)) return '⏰';
-  if (/migration|seed|import/.test(lower)) return '📦';
-  if (/order|cart|product|catalog/.test(lower)) return '🛒';
-  if (/chat|message|conversation/.test(lower)) return '💬';
-  if (/booking|reservation|appointment/.test(lower)) return '📅';
-  if (/inventory|stock|warehouse/.test(lower)) return '📦';
-  if (/customer|client/.test(lower)) return '👤';
+  if (/upload|download|storage|file|media|document|import|export/.test(lower)) return '📁';
+  if (/integration|webhook|api|external|third/.test(lower)) return '🔗';
+  if (/job|cron|scheduler|queue|worker|task|background/.test(lower)) return '⏰';
+  if (/rule|engine|policy|workflow|automation|process/.test(lower)) return '⚙️';
+  if (/cache|performance|optimization/.test(lower)) return '⚡';
+  if (/config|settings|preference/.test(lower)) return '🔧';
+  if (/test|spec|mock/.test(lower)) return '🧪';
+  if (/database|db|data|model|schema/.test(lower)) return '🗄️';
   
   // Default
   return '✨';
@@ -129,32 +131,200 @@ function extractFolderTags(files) {
   return Array.from(folders);
 }
 
+/**
+ * Extract file names from changed files (for tags)
+ * Returns base file names without extensions
+ */
+function extractFileNames(files) {
+  return files
+    .map(f => {
+      const parts = f.split('/');
+      const fileName = parts[parts.length - 1];
+      // Remove extension
+      return fileName.replace(/\.(js|ts|jsx|tsx|py|java|go|rb|php|cs|cpp|vue|svelte)$/i, '');
+    })
+    .filter(name => {
+      // Filter out very generic names
+      return !/^(index|main|app|config|constants|types)$/i.test(name);
+    })
+    .slice(0, 8); // Max 8 file names as tags
+}
+
+/**
+ * Generate business-focused title from file names
+ * Extracts actual business terms from files, not generic folder names
+ * E.g., "tinkController" → "Tink Integration", "BankAccountManager + TransactionList" → "Bank Account & Transaction Management"
+ */
+function generateBusinessTitle(files) {
+  // Extract meaningful business terms from file names
+  const businessTerms = new Set();
+  
+  for (const file of files) {
+    const parts = file.split('/');
+    const fileName = parts[parts.length - 1]
+      .replace(/\.(js|ts|jsx|tsx|py|java|go|rb|php|cs|cpp|vue|svelte)$/i, '')
+      .replace(/\.(css|scss|sass|less)$/i, '');
+    
+    // Remove technical suffixes to get business term
+    const businessTerm = fileName
+      .replace(/(Controller|Service|Model|Route|Page|Component|View|Manager|Handler|Provider|Repository|Util|Helper|Test|Spec)$/i, '')
+      .trim();
+    
+    // Skip very generic or empty terms
+    if (businessTerm && businessTerm.length > 2 && !/^(index|main|app|base|config|types?)$/i.test(businessTerm)) {
+      // Normalize the term
+      const normalized = businessTerm
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[-_]/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      
+      businessTerms.add(normalized);
+    }
+  }
+  
+  let terms = Array.from(businessTerms);
+  
+  if (terms.length === 0) return null;
+  
+  // Remove redundant terms (e.g., "Rule" if we have "Rule Templates")
+  terms = terms.filter((term, index) => {
+    return !terms.some((other, otherIndex) => 
+      index !== otherIndex && other.includes(term) && other !== term
+    );
+  });
+  
+  // Pick top 2 most significant terms (longest/most specific)
+  terms.sort((a, b) => b.length - a.length);
+  terms = terms.slice(0, 2);
+  
+  if (terms.length === 1) {
+    // Single term - use "Updated X" style
+    return `Updated ${terms[0]}`;
+  }
+  
+  // Two terms - use "X & Y" format
+  return `${terms[0]} & ${terms[1]}`;
+}
+
+/**
+ * Make title more descriptive by adding context
+ * ALWAYS returns at least 2 words - no single-word titles
+ */
+function makeDescriptiveTitle(term) {
+  const lower = term.toLowerCase();
+  
+  // Specific mappings for better titles
+  if (/^rule$/i.test(term)) return 'Rule Management';
+  if (/^auth$/i.test(term)) return 'Authentication System';
+  if (/^transaction$/i.test(term)) return 'Transaction Processing';
+  if (/^import$/i.test(term)) return 'Data Import';
+  if (/^export$/i.test(term)) return 'Data Export';
+  if (/^user$/i.test(term)) return 'User Management';
+  if (/^profile$/i.test(term)) return 'User Profile';
+  if (/^account$/i.test(term)) return 'Account Management';
+  if (/^payment$/i.test(term)) return 'Payment Processing';
+  if (/^order$/i.test(term)) return 'Order Management';
+  if (/^product$/i.test(term)) return 'Product Catalog';
+  if (/^invoice$/i.test(term)) return 'Invoice Management';
+  if (/^report$/i.test(term)) return 'Report Generation';
+  if (/^dashboard$/i.test(term)) return 'Dashboard Features';
+  if (/^notification$/i.test(term)) return 'Notification System';
+  if (/^email$/i.test(term)) return 'Email System';
+  if (/^message$/i.test(term)) return 'Messaging System';
+  if (/^search$/i.test(term)) return 'Search Functionality';
+  if (/^filter$/i.test(term)) return 'Filter System';
+  
+  // Generic technical layer names - make them more descriptive
+  if (/^controller(s)?$/i.test(term)) return 'Backend Controllers';
+  if (/^service(s)?$/i.test(term)) return 'Service Layer';
+  if (/^model(s)?$/i.test(term)) return 'Data Models';
+  if (/^component(s)?$/i.test(term)) return 'UI Components';
+  if (/^page(s)?$/i.test(term)) return 'Page Updates';
+  if (/^route(s)?$/i.test(term)) return 'API Routes';
+  if (/^middleware$/i.test(term)) return 'Middleware Layer';
+  if (/^doc(s)?$/i.test(term)) return 'Documentation Updates';
+  if (/^test(s)?$/i.test(term)) return 'Test Coverage';
+  if (/^image(s)?$/i.test(term)) return 'Image Assets';
+  if (/^style(s)?$/i.test(term)) return 'Style Updates';
+  if (/^config$/i.test(term)) return 'Configuration Changes';
+  
+  // For compound terms (already 2+ words), keep as-is
+  if (term.split(' ').length > 1) return term;
+  
+  // For any other single word, add generic context
+  const capitalized = term.charAt(0).toUpperCase() + term.slice(1);
+  return `${capitalized} Features`;
+}
+
 // =============================================================================
 // DYNAMIC DOMAIN DETECTION
 // =============================================================================
 
 /**
+ * Extract meaningful keywords from a file name
+ * Removes common suffixes and splits into words
+ */
+function extractFileKeywords(fileName) {
+  // Remove file extension and common suffixes
+  const cleaned = fileName
+    .replace(/\.(js|ts|jsx|tsx|py|java|go|rb|php|cs|cpp|c|h|swift)$/i, '')
+    .replace(/(Controller|Service|Model|Route|Page|Component|View|Manager|Handler|Provider|Repository|Util|Helper|Test|Spec)$/i, '');
+  
+  // Split camelCase, PascalCase, snake_case, kebab-case
+  const words = cleaned
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[-_]/g, ' ')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(word => word.length > 2); // Only meaningful words
+  
+  return words;
+}
+
+/**
  * Extract meaningful folder/feature names from file paths
- * Skips technical/infrastructure folders
+ * GENERIC: Analyzes BOTH folders AND file names dynamically
+ * Strategy: Collect terms from both sources, score by frequency and context
  */
 function extractDomainCandidates(files) {
-  const candidates = new Map(); // name -> {count, files, depth}
+  const folderCandidates = new Map(); // folder name -> data
+  const termFrequency = new Map(); // term -> {count, files}
   
   for (const file of files) {
     const parts = file.split('/').filter(Boolean);
+    const fileName = parts[parts.length - 1];
     
-    // Analyze each segment for domain signals
-    for (let i = 0; i < parts.length - 1; i++) { // Exclude filename
+    // Extract keywords from file name
+    const fileKeywords = extractFileKeywords(fileName);
+    fileKeywords.forEach(term => {
+      if (!termFrequency.has(term)) {
+        termFrequency.set(term, { count: 0, files: [] });
+      }
+      const entry = termFrequency.get(term);
+      entry.count++;
+      entry.files.push(file);
+    });
+    
+    // Collect all potential folders (except filename)
+    for (let i = 0; i < parts.length - 1; i++) {
       const segment = parts[i];
       const depth = i + 1;
       
-      // Skip technical folders
-      if (TECHNICAL_FOLDERS.includes(segment.toLowerCase())) continue;
+      // Skip technical folders at root
+      if (depth === 1 && TECHNICAL_FOLDERS.includes(segment.toLowerCase())) continue;
       
-      // Skip single-char or very generic names
+      // Skip never-meaningful folders
+      if (SKIP_FOLDERS.includes(segment.toLowerCase())) continue;
+      
+      // Skip single-char or numeric-only names  
       if (segment.length <= 2 || /^[0-9]+$/.test(segment)) continue;
       
-      // Normalize: snake_case, kebab-case, camelCase -> Title Case
+      // Skip CSS/config files as folders
+      if (/\.(css|json|config)$/i.test(segment)) continue;
+      
+      // Normalize to title case
       const normalized = segment
         .replace(/[-_]/g, ' ')
         .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -162,41 +332,84 @@ function extractDomainCandidates(files) {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
       
-      if (!candidates.has(normalized)) {
-        candidates.set(normalized, { count: 0, files: [], depth: 0 });
+      // Calculate meaningfulness score
+      const isDeeper = depth > 2;
+      const isTechnical = /^(pages|components|controllers|services|models|routes|middleware|api|data)$/i.test(segment);
+      
+      // Score: deeper folders and non-technical get bonus
+      let score = 10;
+      if (isDeeper) score += 5;
+      if (!isTechnical) score += 15; // Bigger bonus for domain folders
+      
+      if (!folderCandidates.has(normalized)) {
+        folderCandidates.set(normalized, { count: 0, files: [], depth: 0, keywords: new Set(), score: 0 });
       }
       
-      const entry = candidates.get(normalized);
+      const entry = folderCandidates.get(normalized);
       entry.count++;
       entry.files.push(file);
-      entry.depth += depth; // Accumulate depth
+      entry.depth += depth;
+      entry.score += score;
+      
+      const words = normalized.toLowerCase().split(' ');
+      words.forEach(w => entry.keywords.add(w));
     }
   }
   
-  return candidates;
+  // Create feature names from most frequent file name terms
+  const sortedTerms = Array.from(termFrequency.entries())
+    .sort((a, b) => b[1].count - a[1].count)
+    .filter(([term, data]) => data.count >= 2); // Must appear in at least 2 files
+  
+  // Add top terms as feature candidates (higher score than technical folders)
+  for (const [term, data] of sortedTerms.slice(0, 5)) {
+    const normalized = term.charAt(0).toUpperCase() + term.slice(1);
+    
+    // Skip very generic terms
+    if (/^(src|app|main|index|base|data)$/i.test(normalized)) continue;
+    
+    if (!folderCandidates.has(normalized)) {
+      folderCandidates.set(normalized, { 
+        count: 0, 
+        files: [], 
+        depth: 0, 
+        keywords: new Set([term]), 
+        score: 0 
+      });
+    }
+    
+    const entry = folderCandidates.get(normalized);
+    entry.count += data.count;
+    entry.files.push(...data.files); // Add actual files
+    entry.score += data.count * 30; // Very high score for frequently mentioned file name terms
+  }
+  
+  return folderCandidates;
 }
 
 /**
- * Score domains by importance (file count + depth heuristics)
- * Deeper, more-changed folders = more important
+ * Score domains by importance (GENERIC: prioritizes meaningful terms)
+ * Uses: accumulated score (from frequency and context) + file count + depth
  */
 function scoreDomains(candidates) {
   const scored = [];
   
   for (const [name, data] of candidates) {
-    const avgDepth = data.depth / data.count;
+    const avgDepth = data.count > 0 ? data.depth / data.count : 0;
     
-    // Score = file count (primary) + depth bonus (secondary)
-    // Deeper folders (avgDepth > 2) get bonus
+    // Final score = accumulated score + (file count * 5) + depth bonus
     const depthBonus = avgDepth > 2 ? Math.log2(avgDepth) * 2 : 0;
-    const score = data.count * 10 + depthBonus;
+    const finalScore = data.score + (data.count * 5) + depthBonus;
+    
+    // Filter out very low scores (likely noise)
+    if (finalScore < 15) continue;
     
     scored.push({ 
       name, 
       count: data.count,
-      files: data.files, 
+      files: data.files.length > 0 ? data.files : [],
       avgDepth, 
-      score,
+      score: finalScore,
       icon: inferIcon(name)
     });
   }
@@ -247,92 +460,182 @@ export function detectDomainFromFiles(files) {
 // =============================================================================
 
 /**
- * Generate feature phase info
- * - Title: ONE most prominent domain (highest scored)
- * - Description: 7-10 words, can mention other domains
- * - Tags: Folder names from changed files
+ * Generate feature phase info with improved titles, descriptions, and file-based tags
+ * Can return MULTIPLE events for the same day if distinct features were touched
  */
 export function generateFeaturePhaseInfo(domains, libraries = [], changedFiles = []) {
   const domainList = Array.from(domains.keys());
   
   // If no domains detected, return generic update
   if (domainList.length === 0) {
-    const tags = extractFolderTags(changedFiles);
+    const fileTags = extractFileNames(changedFiles);
+    const folderTags = extractFolderTags(changedFiles);
+    const tags = fileTags.length > 0 ? fileTags : folderTags;
     
-    return {
+    return [{
       title: 'Code Updates',
       icon: '✨',
       description: 'General code improvements and maintenance',
       tags: tags.length > 0 ? tags : ['core']
-    };
+    }];
   }
   
-  // PRIMARY domain for title (first = highest scored from detectDomainFromFiles)
+  // If multiple domains (3+), create separate cards for top domains (max 3)
+  if (domainList.length >= 3) {
+    const events = [];
+    
+    for (let i = 0; i < Math.min(3, domainList.length); i++) {
+      const domainName = domainList[i];
+      const domainConfig = domains.get(domainName);
+      const domainFiles = domainConfig.files || [];
+      
+      // Get file names for this specific domain
+      const fileTags = extractFileNames(domainFiles);
+      
+      // Try to generate business title from actual files
+      const businessTitle = generateBusinessTitle(domainFiles);
+      const descriptiveTitle = businessTitle || makeDescriptiveTitle(domainName);
+      
+      // Generate specific description
+      const description = generateSpecificDescription(domainName, domainFiles);
+      
+      events.push({
+        title: descriptiveTitle,
+        icon: domainConfig.icon,
+        description,
+        tags: fileTags.length > 0 ? fileTags : [domainName.toLowerCase()]
+      });
+    }
+    
+    return events;
+  }
+  
+  // Single or dual domain - create one card
   const primary = domainList[0];
   const primaryConfig = domains.get(primary);
   
-  // TAGS from folder names
+  // Collect all files across domains
   const allFiles = [];
   for (const domain of domains.values()) {
-    allFiles.push(...domain.files);
+    allFiles.push(...(domain.files || []));
   }
-  const tags = extractFolderTags(allFiles);
   
-  // DESCRIPTION: Elaborate on primary, mention others
+  const fileTags = extractFileNames(allFiles);
+  
+  // Try to generate business title from actual files
+  const businessTitle = generateBusinessTitle(allFiles);
+  const descriptiveTitle = businessTitle || makeDescriptiveTitle(primary);
+  
+  // Generate description
   let description = '';
-  
-  // Single domain
   if (domainList.length === 1) {
-    description = generateSingleDomainDescription(primary, libraries);
-  }
-  // Multiple domains - mention primary and hint at others
-  else {
-    const otherDomains = domainList.slice(1);
-    description = generateMultiDomainDescription(primary, otherDomains, libraries);
+    description = generateSpecificDescription(primary, allFiles);
+  } else {
+    // Two domains
+    const other = domainList[1];
+    description = `Implemented ${primary.toLowerCase()} and ${other.toLowerCase()} features`;
   }
   
-  return {
-    title: primary,
+  return [{
+    title: descriptiveTitle,
     icon: primaryConfig.icon,
     description,
-    tags: tags.length > 0 ? tags : libraries.slice(0, 3)
-  };
+    tags: fileTags.length > 0 ? fileTags : [primary.toLowerCase()]
+  }];
 }
 
 /**
- * Generate description for single domain (dynamic, generic)
- *//**
- * Generate description for single domain (dynamic, generic)
+ * Generate specific description based on domain and files changed
  */
-function generateSingleDomainDescription(domain, libraries) {
-  // Generic template based on domain name
-  let desc = `Implemented ${domain.toLowerCase()} functionality and features`;
+/**
+ * Generate business-focused description from actual changes
+ * Uses file names to create natural, business-context descriptions
+ */
+function generateSpecificDescription(domainName, files) {
+  const fileCount = files.length;
   
-  // Add library mention if available
-  if (libraries.length > 0) {
-    const lib = libraries[0];
-    desc = `Added ${lib} for ${domain.toLowerCase()}`;
+  // Extract business terms from file names
+  const businessTerms = [];
+  for (const file of files) {
+    const parts = file.split('/');
+    const fileName = parts[parts.length - 1]
+      .replace(/\.(js|ts|jsx|tsx|py|java|go|rb|php|cs|cpp|vue|svelte|css|scss|png|jpg|svg)$/i, '');
+    
+    const businessTerm = fileName
+      .replace(/(Controller|Service|Model|Route|Page|Component|View|Manager|Handler|Provider|Repository|Util|Helper|Test|Spec)$/i, '')
+      .trim();
+    
+    if (businessTerm && businessTerm.length > 2 && !/^(index|main|app|base|config|types?)$/i.test(businessTerm)) {
+      // Normalize to readable format
+      const normalized = businessTerm
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[-_]/g, ' ')
+        .toLowerCase();
+      businessTerms.push(normalized);
+    }
   }
   
-  return desc;
-}
-
-/**
- * Generate description for multiple domains (primary + others)
- */
-function generateMultiDomainDescription(primary, others, libraries) {
-  const otherCount = others.length;
+  // Get unique terms, sorted by length (more specific first)
+  const uniqueTerms = [...new Set(businessTerms)].sort((a, b) => b.length - a.length);
   
-  // Generic: mention primary and hint at others
-  let desc = '';
+  // Detect change types
+  const hasImages = files.some(f => /\.(png|jpg|jpeg|svg|gif)$/i.test(f));
+  const hasDocs = files.some(f => /\.(md|txt|pdf)$/i.test(f) || /docs?/i.test(f));
+  const hasControllers = files.some(f => /controller/i.test(f));
+  const hasServices = files.some(f => /service/i.test(f));
+  const hasRoutes = files.some(f => /route/i.test(f));
+  const hasModels = files.some(f => /model/i.test(f));
+  const hasPages = files.some(f => /page/i.test(f));
+  const hasComponents = files.some(f => /component/i.test(f));
+  const hasTests = files.some(f => /test|spec/i.test(f));
   
-  if (otherCount === 1) {
-    desc = `Implemented ${primary.toLowerCase()} and ${others[0].toLowerCase()} features`;
-  } else if (otherCount === 2) {
-    desc = `Added ${primary.toLowerCase()}, ${others[0].toLowerCase()}, and ${others[1].toLowerCase()}`;
+  // Special cases
+  if (hasImages && uniqueTerms.some(t => /deploy/i.test(t))) {
+    return `Added deployment diagrams and configuration`;
+  }
+  
+  if (hasImages) {
+    const imageTerms = uniqueTerms.filter(t => t.length > 3).slice(0, 2);
+    if (imageTerms.length > 0) {
+      return `Added ${imageTerms.join(' and ')} assets`;
+    }
+    return `Added ${fileCount} image${fileCount > 1 ? 's' : ''}`;
+  }
+  
+  if (hasDocs) {
+    return `Updated documentation for ${uniqueTerms.slice(0, 2).join(' and ')}`;
+  }
+  
+  // Build business-focused description
+  if (uniqueTerms.length === 0) {
+    return `Updated ${fileCount} file${fileCount > 1 ? 's' : ''}`;
+  }
+  
+  // Determine action verb based on file types
+  let action = 'Updated';
+  if (hasRoutes && hasControllers) {
+    action = 'Implemented';
+  } else if (hasServices && hasModels) {
+    action = 'Enhanced';
+  } else if (hasPages || hasComponents) {
+    action = 'Improved';
+  }
+  
+  // Pick top 1-2 business terms
+  const topTerms = uniqueTerms.slice(0, 2);
+  
+  // Add context based on what changed
+  const contexts = [];
+  if (hasControllers || hasServices || hasRoutes) contexts.push('functionality');
+  if (hasPages || hasComponents) contexts.push('interface');
+  if (hasModels) contexts.push('data handling');
+  if (hasTests) contexts.push('testing');
+  
+  const context = contexts.length > 0 ? ` ${contexts[0]}` : '';
+  
+  if (topTerms.length === 1) {
+    return `${action} ${topTerms[0]}${context}`;
   } else {
-    desc = `Implemented ${primary.toLowerCase()} and ${otherCount} other features`;
+    return `${action} ${topTerms[0]} and ${topTerms[1]}${context}`;
   }
-  
-  return desc;
 }

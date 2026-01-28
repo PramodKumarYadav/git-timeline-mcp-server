@@ -10,13 +10,21 @@ This document defines the requirements and specifications for generating Feature
 
 Each timeline card should contain:
 - **Date**: Formatted as "January 14, 2026"
-- **Phase Title**: Meaningful category-based name.
-  - A very short summary of what the change contains (few words). 
-  - If there are more than one category of changes, just pick one most prominant one.
-- **Icon**: Emoji representing the feature area
-- **Sub Description**: Summary of changes (not raw messages). 
-  - A little longer (7 to 10 words ) to elaborate a bit on the phase title. You may here talk about more changes that are not listed in title. 
-- **Tags**: Individual features "newly" introduced on that day in a pill-shaped badges.
+- **Tags**: Show actual file names (RuleController, RuleManager, etc.)
+- **Title**: More descriptive (e.g., "Rule Management" instead of just "Rule")
+  - Ensure all titles have 2 or more words (no single-word titles like "Routes", "Components").
+  - Use a verb + noun style. Such as "Added Tink Integration". "Enabled Google sign in" etc.
+  - Prefer Business-focused titles, extracted from actual file names. So say if a file is called TinkController prefer calling it "Added Tink Integration" over their technical counterparts say "Added Backend Controllers".
+- **Description**: More informative based on actual changes.
+  - Use similar logic as for title but with a little more details. 
+  - Show count of files touched in brackets, as say (5 files)
+- **Multiple cards per day**: Split into up to 3 cards when different areas are touched
+
+### General instructions
+- Group same-date cards horizontally instead of stacking them vertically
+- Timeline shows date progression, not just individual features
+- Center timeline with cards alternating left/right
+
 
 ### Data Sources
 
@@ -48,9 +56,9 @@ Commit messages can be:
 
 ### Phase Title Naming Logic
 
-Generate **domain-meaningful names** based on what was built, NOT technical layers. You can confidentaly derive it from "file names that are changed". Use below sample only as an example. Do not hardcode these terms into our functions:
+Generate **domain-meaningful names** based on what was built, NOT technical layers. So look into the "actual changes" that were in the committed files. Use below sample only as an example. Do not hardcode these terms into our functions:
 
-| Files/Keywords Detected | Phase Name | Icon | Description |
+| Files/Keywords Detected (becomes tags) | Phase Name | Icon | Description |
 |------------------------|------------|------|-------------|
 | password + reset files | Password Reset Feature | 🔑 | Implemented password reset functionality |
 | rule + engine files | Rule Engine Implementation | ⚙️ | Introduced business rule engine |
@@ -69,28 +77,6 @@ Generate **domain-meaningful names** based on what was built, NOT technical laye
 ✅ **RIGHT**: "Password Reset Feature", "Rule Engine Implementation", "Payment Integration"
 
 The phase name should answer: **"What business capability was added?"** not "What technical layer was changed?"
-
-### Tags and sub description (Domain Feature Detection)
-
-You can get the "Tag" name from the parent folder i.e. changed and you can get the "sub description" from the actual content that is changed in that file. In below example, based on what is changed (second column), a sub descriptoin can be created (first column). The tags would simply be the parent folder name. 
-
-```
-Password Reset:       /password/, /reset/, "password reset", "forgot password"
-User Authentication:  /auth/, /login/, /signup/, /session/, "login", "signup", "authentication"
-User Profile:         /profile/, /account/, /settings/, "profile", "account settings"
-Email Notifications:  /email/, /mail/, /notification/, "email", "notification", "send mail"
-Rule Engine:          /rule/, /engine/, /policy/, "rule engine", "business rules"
-Payment Integration:  /payment/, /stripe/, /billing/, /invoice/, "payment", "checkout", "billing"
-File Upload:          /upload/, /storage/, /s3/, "file upload", "image upload"
-Search:               /search/, /filter/, /query/, "search", "filter"
-Dashboard:            /dashboard/, /analytics/, /stats/, "dashboard", "analytics"
-Reporting:            /report/, /export/, "report", "export"
-User Management:      /user/, /admin/, /role/, "user management", "admin panel", "roles"
-API Integration:      /integration/, /webhook/, /api/, "integrate", "webhook", "third-party"
-Caching:              /cache/, /redis/, "caching", "redis"
-Scheduled Jobs:       /cron/, /job/, /scheduler/, "scheduled", "cron job", "background job"
-Data Migration:       /migration/, /seed/, "migration", "data import"
-```
 
 ## HTML Output Specifications
 
