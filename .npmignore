@@ -1,0 +1,41 @@
+# Test files and directories
+playwright-demo/
+tests/
+*.test.js
+*.spec.js
+
+# Development files
+.vscode/
+.github/
+.git/
+.gitignore
+
+# Build and dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated timeline output
+.timeline/
+
+# IDE and editor
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment and temporary files
+.env
+.env.*
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db

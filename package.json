@@ -1,13 +1,55 @@
 {
-  "name": "git-timeline-mcp-server",
+  "name": "@pramodyadav027/git-timeline-mcp-server",
   "version": "1.0.0",
-  "description": "MCP server that analyzes git history to generate visual timelines for features and tooling.",
+  "description": "MCP server that analyzes git history to generate beautiful visual timelines for features and tooling evolution. Track your project's development journey with intelligent code analysis.",
   "main": "server.js",
   "type": "module",
+  "bin": {
+    "git-timeline": "./generate-timelines.js"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "prepublishOnly": "npm install"
   },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "git",
+    "timeline",
+    "visualization",
+    "history",
+    "analytics",
+    "features",
+    "tooling",
+    "development",
+    "vscode",
+    "copilot"
+  ],
+  "author": "Pramod Kumar Yadav",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PramodKumarYadav/git-timeline-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PramodKumarYadav/git-timeline-mcp-server/issues"
+  },
+  "homepage": "https://github.com/PramodKumarYadav/git-timeline-mcp-server#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "server.js",
+    "generate-timelines.js",
+    "tools/",
+    "src/",
+    "README.md",
+    "LICENSE",
+    "INSTRUCTIONS_FEATURES.md",
+    "INSTRUCTIONS_TOOLING.md",
+    "timeline-reference.png"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.25.0"

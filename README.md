@@ -38,19 +38,71 @@ A Model Context Protocol (MCP) server that analyzes your project's git history a
 
 ## Installation
 
+### Option 1: Install from npm (Recommended)
+
+Install globally to use the CLI command anywhere:
+
+```bash
+npm install -g @pramodyadav027/git-timeline-mcp-server
+
+# Then use the CLI command in any git repository
+cd /path/to/your/project
+git-timeline
+```
+
+### Option 2: Local Development/Testing
+
 Clone this repository and install dependencies:
 
 ```bash
 git clone https://github.com/PramodKumarYadav/git-timeline-mcp-server.git
 cd git-timeline-mcp-server
 npm install
+
+# Generate timelines
+node generate-timelines.js
 ```
+
+```bash
+npx @pramodyadav027/git-timeline-mcp-server
+```
+
+Or use without installing via npx:
 
 ## Configuration for VS Code
 
-This server integrates with VS Code through the Model Context Protocol (MCP). Configure it in your VS Code settings:
+This server integrates with VS Code through the Model Context Protocol (MCP). You can configure it in two ways:
 
-1. **Add to VS Code MCP settings** (`.vscode/mcp.json` in your workspace):
+### Option 1: Using npm Package (Recommended)
+
+Add to your VS Code MCP settings (`.vscode/mcp.json` in your workspace):
+
+```json
+{
+  "mcpServers": {
+    "git-timeline": {
+      "command": "npx",
+      "args": ["@pramodyadav027/git-timeline-mcp-server"]
+    }
+  }
+}
+```
+
+Or if installed globally:
+
+```json
+{
+  "mcpServers": {
+    "git-timeline": {
+      "command": "git-timeline-mcp-server"
+    }
+  }
+}
+```
+
+### Option 2: Using Local Installation
+
+If you cloned the repository locally:
 
 ```json
 {
@@ -65,9 +117,11 @@ This server integrates with VS Code through the Model Context Protocol (MCP). Co
 }
 ```
 
-2. **Replace the path** with the absolute path to your cloned `server.js` file
+**Important:** Replace `/absolute/path/to/git-timeline-mcp-server/server.js` with the actual absolute path to your cloned `server.js` file.
 
-3. **Reload VS Code** to activate the MCP server
+### Reload VS Code
+
+After adding the configuration, reload VS Code to activate the MCP server.
 
 ### Monitoring Multiple Projects
 
@@ -77,20 +131,18 @@ To analyze multiple repositories, add separate server entries:
 {
   "mcpServers": {
     "git-timeline-project1": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/git-timeline-mcp-server/server.js"
-      ]
+      "command": "npx",
+      "args": ["@pramodyadav027/git-timeline-mcp-server"]
     },
     "git-timeline-project2": {
-      "command": "node",
-      "args": [
-        "/absolute/path/to/git-timeline-mcp-server/server.js"
-      ]
+      "command": "npx",
+      "args": ["@pramodyadav027/git-timeline-mcp-server"]
     }
   }
 }
 ```
+
+Each MCP server instance will analyze the git repository in the workspace where it's invoked.
 
 ## Available Tools
 
