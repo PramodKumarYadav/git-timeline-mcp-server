@@ -7,24 +7,28 @@ A Model Context Protocol (MCP) server that analyzes your project's git history a
 ## Features
 
 📅 **Feature Timeline** - Visualize feature development based on actual code changes
+
 - Analyzes source file modifications to identify feature additions
 - Detects domains from file paths, function names, and code patterns
 - Groups features by date with intelligent categorization
 - Shows actual file names as tags (controllers, services, pages, etc.)
 
 🔧 **Tooling Timeline** - Track technology stack evolution
+
 - Monitors dependencies from package.json changes
 - Detects tooling from configuration files (eslint, prettier, docker, etc.)
 - Fetches package descriptions from npm registry for context
 - Shows only newly introduced tools (filters out version updates)
 
 📊 **Interactive Dashboard** - Central hub for project insights
+
 - Side-by-side comparison of features and tooling
 - Quick navigation between timelines
 - Responsive design for desktop and mobile
 - Beautiful gradient UI with card-based layout
 
 🎯 **Smart Analysis**
+
 - Ignores commit messages (analyzes actual code changes)
 - Filters source files only (excludes configs, lock files, docs)
 - Intelligent grouping by date and domain
@@ -153,15 +157,18 @@ The server provides three MCP tools that can be invoked through VS Code Copilot:
 Analyzes git history and generates a timeline of features added based on actual code changes (not commit messages).
 
 **Parameters:**
+
 - `repoPath` (optional): Path to git repository (defaults to current directory)
 - `maxCommits` (optional): Maximum commits to scan (default: 2000)
 
 **Output:**
+
 - Creates `.timeline/FEATURE_TIMELINE.html` - Interactive visual timeline
 - Creates `.timeline/FEATURE_TIMELINE.md` - Markdown version
 - Returns event summary with file paths
 
 **Detection Method:**
+
 - Analyzes file paths (e.g., `/auth/login.js` → Authentication)
 - Extracts function/class names from diffs
 - Tracks import statements and code patterns
@@ -172,15 +179,18 @@ Analyzes git history and generates a timeline of features added based on actual 
 Analyzes git history and generates a timeline of tools and libraries introduced.
 
 **Parameters:**
+
 - `repoPath` (optional): Path to git repository (defaults to current directory)
 - `maxCommits` (optional): Maximum commits to scan (default: 2000)
 
 **Output:**
+
 - Creates `.timeline/TOOLING_TIMELINE.html` - Interactive visual timeline
 - Creates `.timeline/TOOLING_TIMELINE.md` - Markdown version
 - Returns event summary with file paths
 
 **Detection Method:**
+
 - Parses package.json diffs for dependency additions
 - Detects config files (eslint, prettier, docker, github workflows)
 - Fetches package descriptions from npm registry (async)
@@ -191,10 +201,12 @@ Analyzes git history and generates a timeline of tools and libraries introduced.
 Generates both feature and tooling timelines plus an interactive dashboard.
 
 **Parameters:**
+
 - `repoPath` (optional): Path to git repository (defaults to current directory)
 - `maxCommits` (optional): Maximum commits to scan (default: 2000)
 
 **Output:**
+
 - Creates `.timeline/FEATURE_TIMELINE.html`
 - Creates `.timeline/FEATURE_TIMELINE.md`
 - Creates `.timeline/TOOLING_TIMELINE.html`
@@ -222,7 +234,7 @@ You can also generate timelines directly from the command line:
 
 The codebase is organized into modular components for better maintainability:
 
-```
+```ini
 git-timeline-mcp-server/
 ├── server.js                    # MCP server orchestration
 ├── generate-timelines.js        # CLI entry point
@@ -318,6 +330,7 @@ This server only operates on the git repository in your current workspace. The t
 - Do not send data to external services (except npm registry for package descriptions)
 
 For enhanced security:
+
 - Review the configured repository path before running
 - Use absolute paths in MCP configuration
 - Keep the server code updated
@@ -327,20 +340,24 @@ For enhanced security:
 ### Common Issues:
 
 **"Not a git repository" error**
+
 - Ensure you're running the tool in a git repository
 - Check that `.git` folder exists in the project root
 
 **"No events found"**
+
 - Try increasing `maxCommits` parameter
 - Check that your repository has commit history
 - Verify that source files exist in the repository
 
 **MCP server not connecting**
+
 - Verify the absolute path in `.vscode/mcp.json` is correct
 - Restart VS Code after configuration changes
 - Check VS Code Developer Tools console for errors
 
 **Timelines missing features/tools**
+
 - Ensure changes are committed (not just staged)
 - Check that file extensions match source patterns
 - Review INSTRUCTIONS files for detection logic
@@ -352,11 +369,13 @@ For enhanced security:
 Modify behavior by editing configuration in the detector files:
 
 **Feature Detection** (`tools/detectors/features.js`):
+
 - Source file patterns (currently: `.js`, `.ts`, `.jsx`, `.tsx`, `.py`, `.java`, etc.)
 - Domain detection keywords
 - Grouping rules
 
 **Tooling Detection** (`tools/detectors/tooling.js`):
+
 - Config file patterns to detect
 - Tool categorization logic
 - LLM prompt for phase naming
@@ -364,6 +383,7 @@ Modify behavior by editing configuration in the detector files:
 ### Visual Customization
 
 Modify appearance by editing the HTML generators (`tools/generators/output.js`):
+
 - Color schemes and gradients
 - Card layouts and spacing
 - Typography and sizing
@@ -397,6 +417,7 @@ Modify appearance by editing the HTML generators (`tools/generators/output.js`):
 ## Output Examples
 
 ### Feature Timeline
+
 - Groups features by date with intelligent domain detection
 - Shows actual file names as tags (e.g., `LoginController`, `PaymentService`)
 - Business-focused titles (e.g., "User Authentication" not "Auth Controllers")
@@ -404,6 +425,7 @@ Modify appearance by editing the HTML generators (`tools/generators/output.js`):
 - Verb + noun style descriptions
 
 ### Tooling Timeline
+
 - Tracks when libraries and tools were first introduced
 - Fetches descriptions from npm registry for context
 - Groups by category (Frontend, Backend, Testing, CI/CD, etc.)
@@ -411,6 +433,7 @@ Modify appearance by editing the HTML generators (`tools/generators/output.js`):
 - Filters out version updates (only shows new additions)
 
 ### Dashboard
+
 - Side-by-side view of both timelines
 - Recent activity summary
 - Quick links to detailed timelines

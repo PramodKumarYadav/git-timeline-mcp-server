@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "bin": {
-    "git-timeline": "./generate-timelines.js"
+    "git-timeline-mcp-server": "./generate-timelines.js"
   },
   "scripts": {
     "start": "node server.js",
