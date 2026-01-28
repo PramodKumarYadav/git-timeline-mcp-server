@@ -1,6 +1,6 @@
 {
   "name": "@pramodyadav027/git-timeline-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server that analyzes git history to generate beautiful visual timelines for features and tooling evolution. Track your project's development journey with intelligent code analysis.",
   "main": "server.js",
   "type": "module",
