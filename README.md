@@ -51,7 +51,7 @@ npm install -g @pramodyadav027/git-timeline-mcp-server
 
 # Then use the CLI command in any git repository
 cd /path/to/your/project
-git-timeline
+git-timeline-mcp-server
 ```
 
 Or use without installing via npx:
