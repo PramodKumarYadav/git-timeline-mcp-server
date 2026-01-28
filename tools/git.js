@@ -26,7 +26,8 @@ import {
 import {
   extractAddedDependencies,
   extractToolsFromConfigFiles,
-  generateToolingPhaseInfo
+  generateToolingPhaseInfo,
+  resetShownTools
 } from './detectors/tooling.js';
 
 // Feature detection
@@ -50,12 +51,17 @@ import {
 // =============================================================================
 
 export async function analyzeToolingTimeline({ repoPath = process.cwd(), maxCommits = 2000 } = {}) {
-  repoPath = path.resolve(repoPath);
-  ensureRepo(repoPath);
-  const commits = listCommits(repoPath, maxCommits);
-  
-  // Collect tools by date (one card per day)
-  const toolsByDate = new Map();
+  try {
+    repoPath = path.resolve(repoPath);
+    ensureRepo(repoPath);
+    
+    // Reset shown tools at the start of each timeline generation
+    resetShownTools();
+    
+    const commits = listCommits(repoPath, maxCommits);
+    
+    // Collect tools by date (one card per day)
+    const toolsByDate = new Map();
   
   for (const c of commits) {
     const date = toDateIso(c.date);
@@ -100,17 +106,21 @@ export async function analyzeToolingTimeline({ repoPath = process.cwd(), maxComm
     const isFirstDay = (i === 0);
     
     // Dynamically generate phase info
-    const phaseInfo = await generateToolingPhaseInfo(packageList, configList, filesList, isFirstDay);
-    
-    // Only add events that have new tools
-    if (phaseInfo.tools.length > 0) {
-      events.push({
-        date,
-        title: phaseInfo.title,
-        icon: phaseInfo.icon,
-        description: phaseInfo.description,
-        tags: phaseInfo.tools
-      });
+    try {
+      const phaseInfo = await generateToolingPhaseInfo(packageList, configList, filesList, isFirstDay);
+      
+      // Only add events that have new tools and valid phase info
+      if (phaseInfo && phaseInfo.tools && phaseInfo.tools.length > 0 && phaseInfo.title) {
+        events.push({
+          date,
+          title: phaseInfo.title,
+          icon: phaseInfo.icon || '⚙️',
+          description: phaseInfo.description || '',
+          tags: phaseInfo.tools
+        });
+      }
+    } catch (error) {
+      console.error(`[ERROR] Failed to generate tooling phase info for ${date}:`, error);
     }
   }
   
@@ -124,6 +134,10 @@ export async function analyzeToolingTimeline({ repoPath = process.cwd(), maxComm
   generateTimelineMd(mdPath, 'Tooling Timeline', events);
   
   return { title: 'Tooling Timeline', events, mermaid, files: { html: htmlPath, markdown: mdPath } };
+  } catch (error) {
+    console.error(`[ERROR] analyzeToolingTimeline failed:`, error);
+    return { title: 'Tooling Timeline', events: [], mermaid: '', files: {} };
+  }
 }
 
 // =============================================================================
@@ -131,9 +145,10 @@ export async function analyzeToolingTimeline({ repoPath = process.cwd(), maxComm
 // =============================================================================
 
 export function analyzeFeatureTimeline({ repoPath = process.cwd(), maxCommits = 2000 } = {}) {
-  repoPath = path.resolve(repoPath);
-  ensureRepo(repoPath);
-  const commits = listCommits(repoPath, maxCommits);
+  try {
+    repoPath = path.resolve(repoPath);
+    ensureRepo(repoPath);
+    const commits = listCommits(repoPath, maxCommits);
   
   // Collect features by date (one card per day) with associated libraries
   const featuresByDate = new Map();
@@ -213,6 +228,10 @@ export function analyzeFeatureTimeline({ repoPath = process.cwd(), maxCommits = 
   generateTimelineMd(mdPath, 'Feature Timeline', events);
   
   return { title: 'Feature Timeline', events, mermaid, files: { html: htmlPath, markdown: mdPath } };
+  } catch (error) {
+    console.error(`[ERROR] analyzeFeatureTimeline failed:`, error);
+    return { title: 'Feature Timeline', events: [], mermaid: '', files: {} };
+  }
 }
 
 // =============================================================================

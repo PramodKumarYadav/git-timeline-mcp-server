@@ -255,11 +255,15 @@ export function generateTimelineMd(filepath, title, events) {
 // DASHBOARD GENERATION
 // =============================================================================
 
-export function generateDashboard(repoPath, featureEvents, toolingEvents) {
+export function generateDashboard(repoPath, featureEvents = [], toolingEvents = []) {
   const timelineDir = path.join(repoPath, '.timeline');
   mkdirSync(timelineDir, { recursive: true });
   
-  const featureRows = featureEvents.slice(0, 8).map(e => {
+  // Ensure arrays are defined and valid
+  const safeFeatureEvents = Array.isArray(featureEvents) ? featureEvents : [];
+  const safeToolingEvents = Array.isArray(toolingEvents) ? toolingEvents : [];
+  
+  const featureRows = safeFeatureEvents.slice(0, 8).map(e => {
     const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return `<tr>
       <td><strong>${e.icon} ${e.title}</strong><br><small style="color:#999">${formattedDate}</small></td>
@@ -267,7 +271,7 @@ export function generateDashboard(repoPath, featureEvents, toolingEvents) {
     </tr>`;
   }).join('');
 
-  const toolingRows = toolingEvents.slice(0, 8).map(e => {
+  const toolingRows = safeToolingEvents.slice(0, 8).map(e => {
     const formattedDate = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     return `<tr>
       <td><strong>${e.icon} ${e.title}</strong><br><small style="color:#999">${formattedDate}</small></td>

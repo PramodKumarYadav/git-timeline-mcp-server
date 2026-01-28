@@ -210,28 +210,29 @@ function categorizeLibraries(libraries) {
  * Following INSTRUCTIONS_TOOLING.md requirements
  */
 export async function generateToolingPhaseInfo(packageNames, configTools, changedFiles, isFirstDay = false) {
-  // Filter to only NEW tools
-  const newPackages = packageNames.filter(pkg => !shownTools.has(pkg));
-  const newConfigTools = configTools.filter(tool => !shownTools.has(tool));
-  
-  // Mark as shown
-  newPackages.forEach(pkg => shownTools.add(pkg));
-  newConfigTools.forEach(tool => shownTools.add(tool));
-  
-  const allNewTools = [...newPackages, ...newConfigTools];
-  
-  // If no new tools, skip this date
-  if (allNewTools.length === 0) {
-    return {
-      title: '',
-      description: '',
-      icon: '',
-      tools: []
-    };
-  }
-  
-  // Categorize the libraries
-  const categories = categorizeLibraries(allNewTools);
+  try {
+    // Filter to only NEW tools
+    const newPackages = packageNames.filter(pkg => !shownTools.has(pkg));
+    const newConfigTools = configTools.filter(tool => !shownTools.has(tool));
+    
+    // Mark as shown
+    newPackages.forEach(pkg => shownTools.add(pkg));
+    newConfigTools.forEach(tool => shownTools.add(tool));
+    
+    const allNewTools = [...newPackages, ...newConfigTools];
+    
+    // If no new tools, skip this date
+    if (allNewTools.length === 0) {
+      return {
+        title: '',
+        description: '',
+        icon: '',
+        tools: []
+      };
+    }
+    
+    // Categorize the libraries
+    const categories = categorizeLibraries(allNewTools);
   
   // MULTI-CATEGORY DETECTION - Check ALL categories, show max 3 in title
   const activeCategories = [];
@@ -480,6 +481,16 @@ export async function generateToolingPhaseInfo(packageNames, configTools, change
     icon: '📦',
     tools: allNewTools
   };
+  } catch (error) {
+    console.error('[ERROR] generateToolingPhaseInfo failed:', error);
+    // Return minimal valid object on error
+    return {
+      title: 'Dependencies Added',
+      description: 'Added new development dependencies',
+      icon: '📦',
+      tools: packageNames.concat(configTools)
+    };
+  }
 }
 
 /**
