@@ -1,5 +1,5 @@
 {
-  "name": "git-history-timeline-mcp",
+  "name": "git-timeline-mcp-server",
   "version": "1.0.0",
   "description": "MCP server that analyzes git history to generate visual timelines for features and tooling.",
   "main": "server.js",
