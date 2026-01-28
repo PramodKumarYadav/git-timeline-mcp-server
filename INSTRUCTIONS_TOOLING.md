@@ -1,6 +1,6 @@
 # Timeline Generation Instructions
 
-This document defines the requirements and specifications for generating Feature and Tooling timelines from git history.
+This document defines the requirements and specifications for generating Tooling timelines from git history.
 
 ---
 
@@ -47,5 +47,30 @@ Commit messages can be:
 - Incomplete (doesn't mention all changes)
 - Lying (says one thing, does another)
 
+## HTML Output Specifications
+
+### Visual Style
+- Gradient background: #667eea to #764ba2
+- Cards: White with rounded corners (12px), shadow
+- Timeline: Vertical line in center, alternating left/right cards
+- Tags: Library Badges with Crescent Moon Icon
+
+### Responsive
+- Max width: 1100px
+- Cards: 48% width on desktop
+- Mobile: Stack vertically
+
+---
+
+## Files Generated (only tooling specific)
+
+```
+.timeline/
+├── index.html              # Dashboard with links to both timelines
+├── FEATURE_TIMELINE.html   # Feature timeline visualization
+├── FEATURE_TIMELINE.md     # Markdown version
+├── TOOLING_TIMELINE.html   # Tooling timeline visualization
+└── TOOLING_TIMELINE.md     # Markdown version
+```
 ---
 

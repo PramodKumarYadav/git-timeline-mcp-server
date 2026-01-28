@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { analyzeFeatureTimeline, analyzeToolingTimeline } from "./tools/git.js";
+import { analyzeFeatureTimeline, analyzeToolingTimeline, generateDashboard, generateAllTimelines } from "./tools/git.js";
 
 export class GitTimelineServer {
   constructor(projectPath) {
@@ -28,21 +28,27 @@ export class GitTimelineServer {
     // Register generateFeatureTimeline tool
     this.server.tool(
       "generateFeatureTimeline",
-      "Analyze git history and produce a Mermaid timeline of features added",
+      "Analyze git history and produce a Mermaid timeline of features added. Also generates HTML files in .timeline/ folder.",
       {
         repoPath: z.string().optional().describe("Path to git repo (defaults to current directory)"),
         maxCommits: z.number().optional().describe("Max commits to scan (default 2000)"),
       },
       async (args) => {
         try {
-          const result = analyzeFeatureTimeline({
-            repoPath: args?.repoPath || this.projectPath,
+          const repoPath = args?.repoPath || this.projectPath;
+          const features = analyzeFeatureTimeline({
+            repoPath,
             maxCommits: args?.maxCommits || 2000,
           });
+          // Also generate tooling to create dashboard
+          const tooling = analyzeToolingTimeline({ repoPath, maxCommits: args?.maxCommits || 2000 });
+          generateDashboard(repoPath, features.events, tooling.events);
+          
           return {
             content: [
-              { type: "text", text: "Mermaid diagram (paste into a Mermaid renderer or markdown):" },
-              { type: "text", text: result.mermaid },
+              { type: "text", text: `Generated ${features.events.length} feature phases. Files saved to .timeline/ folder.` },
+              { type: "text", text: "Mermaid diagram:" },
+              { type: "text", text: features.mermaid },
             ],
           };
         } catch (error) {
@@ -57,21 +63,27 @@ export class GitTimelineServer {
     // Register generateToolingTimeline tool
     this.server.tool(
       "generateToolingTimeline",
-      "Analyze git history and produce a Mermaid timeline of tooling introduced",
+      "Analyze git history and produce a Mermaid timeline of tooling introduced. Also generates HTML files in .timeline/ folder.",
       {
         repoPath: z.string().optional().describe("Path to git repo (defaults to current directory)"),
         maxCommits: z.number().optional().describe("Max commits to scan (default 2000)"),
       },
       async (args) => {
         try {
-          const result = analyzeToolingTimeline({
-            repoPath: args?.repoPath || this.projectPath,
+          const repoPath = args?.repoPath || this.projectPath;
+          const tooling = analyzeToolingTimeline({
+            repoPath,
             maxCommits: args?.maxCommits || 2000,
           });
+          // Also generate features to create dashboard
+          const features = analyzeFeatureTimeline({ repoPath, maxCommits: args?.maxCommits || 2000 });
+          generateDashboard(repoPath, features.events, tooling.events);
+          
           return {
             content: [
-              { type: "text", text: "Mermaid diagram (paste into a Mermaid renderer or markdown):" },
-              { type: "text", text: result.mermaid },
+              { type: "text", text: `Generated ${tooling.events.length} tooling phases. Files saved to .timeline/ folder.` },
+              { type: "text", text: "Mermaid diagram:" },
+              { type: "text", text: tooling.mermaid },
             ],
           };
         } catch (error) {
